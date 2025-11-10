@@ -61,13 +61,13 @@ namespace Empployee_Attendance
             this.Close();
         }
 
-        private void LoadTodayShifts(int employeeId) 
+        private async Task LoadTodayShifts(int employeeId) 
         {
-            var todayshifts = _repo.GetTodayShift(employeeId);
+            var todayshifts = await _repo.GetTodayShift(employeeId);
 
             lblStore.Text = $"Mağaza: {todayshifts.StoreName}";
 
-            var load = _repo.Loadstatus(employeeId);
+            var load = await _repo.Loadstatus(employeeId);
 
             if (load == null)
             {

@@ -191,7 +191,6 @@
             tabAttendance.Size = new Size(1638, 628);
             tabAttendance.TabIndex = 1;
             tabAttendance.Text = "Davranış Cədvəli";
-            tabAttendance.Enter += tabAttendance_Enter;
             // 
             // FilterStatus
             // 
@@ -201,7 +200,6 @@
             FilterStatus.Name = "FilterStatus";
             FilterStatus.Size = new Size(159, 25);
             FilterStatus.TabIndex = 7;
-            FilterStatus.SelectedIndexChanged += FilterStatus_SelectedIndexChanged;
             // 
             // panel1
             // 
@@ -225,7 +223,6 @@
             txtaxtar.TabIndex = 5;
             txtaxtar.Text = "axtar....";
             txtaxtar.Click += txtaxtar_Click;
-            txtaxtar.TextChanged += txtaxtar_TextChanged;
             // 
             // dgvAttendance
             // 
@@ -292,7 +289,6 @@
             cmbStore.Name = "cmbStore";
             cmbStore.Size = new Size(200, 25);
             cmbStore.TabIndex = 0;
-            cmbStore.SelectedIndexChanged += cmbStore_SelectedIndexChanged;
             cmbStore.Enter += cmbStore_Enter;
             // 
             // label1
@@ -328,7 +324,6 @@
             btnViewAttendance.TabIndex = 3;
             btnViewAttendance.Text = "Cədvəli göstər";
             btnViewAttendance.UseVisualStyleBackColor = false;
-            btnViewAttendance.Click += btnViewAttendance_Click;
             // 
             // timer
             // 

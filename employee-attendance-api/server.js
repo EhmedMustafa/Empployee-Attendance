@@ -7,6 +7,8 @@ const cors = require('cors');
 const sql = require('mssql');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { unwatchFile } = require('fs');
+const { error } = require('console');
 
 const app = express();
 app.use(cors());
@@ -90,7 +92,7 @@ app.post('/api/login', async (req, res) => {
         }
 
         const employee = rows[0];
-        const validPassword = await bcrypt.compare(password, employee.PassWordHash);
+        const validPassword = password.trim() === employee.PassWordHash.trim();
 
         if (!validPassword) {
             return res.status(401).json({ message: 'Invalid credentials' });
@@ -189,6 +191,34 @@ app.get('/api/stores', async (req, res) => {
     }
 });
 
+app.get('/api/employees', async (req,res)=>{
+        try {
+            console.log('trying to excute employee query...');
+            if (!pool){
+                throw new Error ('Database connection not established');
+            }
+            console.log('pool exists,executing query...');
+            const result= await pool.request().query('select * from employees');
+            console.log('Query result:',result);
+            if(result&& result.recordset){
+                console.log('Query successful,rows:',result.recordset);
+                res.json(result.recordset);
+            }else {
+                throw new Error('No recordset returned');
+            }
+
+        } catch (error) {
+            console.error('MSSQL Error:', error.message);
+        console.error('Full error:', error);
+        res.status(500).json({
+            message: 'Server error',
+            details: error.message,
+            stack: error.stack
+        });
+        }
+});
+
+
 // Health check
 app.get('/api/ping', (req, res) => {
     res.json({ status: 'ok' });
@@ -223,6 +253,54 @@ app.get('/api/attendance/store/:storeId', authenticateToken, async (req, res) =>
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
+    }
+});
+
+
+
+app.get('/api/shifts/today/:employeeId', async (req, res) => {
+    const { employeeId } = req.params;
+
+    try {
+        if (!pool) {
+            return res.status(500).json({ error: 'Database not connected yet' });
+        }
+
+        const result = await pool.request()
+            .input('EmployeeId', sql.Int, employeeId)
+            .query(`
+                SELECT  
+                    e.FullName,
+                    s.StoreName,
+                    sh.StartTime,
+                    sh.EndTime,
+                    sh.DayOff
+                FROM Shifts sh
+                INNER JOIN Stores s ON s.StoreId = sh.StoreId
+                INNER JOIN Employees e ON e.EmployeeId = sh.EmployeeId
+                WHERE sh.EmployeeId = @EmployeeId 
+                  AND CAST(sh.[Date] AS DATE) = CAST(GETDATE() AS DATE)
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: 'Bugünkü növbə tapılmadı' });
+        }
+
+        // API-dən TimeSpan string göndəririk
+        const shift = result.recordset[0];
+        const startTime = shift.StartTime ? `${shift.StartTime.getHours().toString().padStart(2,'0')}:${shift.StartTime.getMinutes().toString().padStart(2,'0')}` : null;
+        const endTime = shift.EndTime ? `${shift.EndTime.getHours().toString().padStart(2,'0')}:${shift.EndTime.getMinutes().toString().padStart(2,'0')}` : null;
+
+        res.json({
+            FullName: shift.FullName,
+            StoreName: shift.StoreName,
+            StartTime: startTime,
+            EndTime: endTime,
+            DayOff: shift.DayOff
+        });
+    } catch (error) {
+        console.error('❌ Shift query error:', error);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 

@@ -7,13 +7,14 @@ using System.Text.Json;
 using System.Linq;
 using Empployee_Attendance.Dto;
 using Empployee_Attendance.Models;
+using Newtonsoft.Json;
 
 namespace Empployee_Attendance.Repository
 {
    public class EmployeeRepository
     {
         private readonly HttpClient _httpClient;
-        private const string BaseUrl = "http://localhost:3000/api";
+        private const string BaseUrl = "http://localhost:3000/api/";
         private string _token;
 
         public EmployeeRepository()
@@ -75,12 +76,15 @@ namespace Empployee_Attendance.Repository
         {
             try 
             {
-                var response = await _httpClient.GetAsync($"/shifts/today/{employeeId}");
+                var response = await _httpClient.GetAsync($"shifts/today/{employeeId}");
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<ShiftsDtos>();
+                    var json = await response.Content.ReadAsStringAsync();
+                    var shifts = JsonConvert.DeserializeObject<ShiftsDtos>(json);
+                    return shifts?? new ShiftsDtos();
+
                 }
-                return null;
+                return new ShiftsDtos();
             }
             catch (Exception ex)
             {
@@ -209,10 +213,12 @@ namespace Empployee_Attendance.Repository
         {
             try
             {
-                var response = await _httpClient.GetAsync("/employees");
+                var response = await _httpClient.GetAsync("employees");
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<List<Employee>>();
+                    var json = await response.Content.ReadAsStringAsync();
+                    var employess = JsonConvert.DeserializeObject<List<Employee>>(json);
+                    return employess?? new List<Employee>();
                 }
                 return new List<Employee>();
             }

@@ -7,7 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Empployee_Attendance.Models;
 using Empployee_Attendance.Repository;
+using Newtonsoft.Json;
 
 namespace Empployee_Attendance
 {
@@ -45,7 +47,7 @@ namespace Empployee_Attendance
             else txtPassword.UseSystemPasswordChar = true;
         }
 
-        private void btnLogin_Click(object sender, EventArgs e)
+        private async void btnLogin_Click(object sender, EventArgs e)
         {
             var username = txtUsername.Text;
             var password = txtPassword.Text;
@@ -58,29 +60,67 @@ namespace Empployee_Attendance
                 return;
             }
 
-            var user = _repo.GetUserByname(username, password);
-            if (user == null)
+
+            string apiUrl = "http://localhost:3000/api/login";
+
+            var loginData = new { username = username, password = password };
+
+            var json = JsonConvert.SerializeObject(loginData);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using (HttpClient client = new HttpClient())
             {
-                MessageBox.Show("Yanlış İstifadəçi adı/Parol", "Xəbardarlıq", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                var response = await client.PostAsync(apiUrl, content);
+                var responseText = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var loginResult = JsonConvert.DeserializeObject<LoginResponse>(responseText);
+                    var user = loginResult.Employee;
+                    MessageBox.Show("Uğurla daxil oldunuz!", "Məlumat", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    if (user.IsAdmin)
+                    {
+                        AdminDashboardForm admin = new AdminDashboardForm();
+                        this.Hide();
+                        admin.ShowDialog();
+                    }
+                    else
+                    {
+                        MainForm mainForm = new MainForm(username, user.EmployeeId);
+                        this.Hide();
+                        mainForm.ShowDialog();
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Yanlış istifadəçi adı və ya şifrə!", "Xəta", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
 
-            int empid = user.EmployeeId;
+            //var user = _repo.GetUserByname(username, password);
+            //if (user == null)
+            //{
+            //    MessageBox.Show("Yanlış İstifadəçi adı/Parol", "Xəbardarlıq", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            //    return;
+            //}
 
-            if (user.IsAdmin)
-            {
-                MessageBox.Show("Uğurla daxil olun!", "Məlumat Mesajı", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                AdminDashboardForm admin = new AdminDashboardForm();
-                this.Hide();
-                admin.ShowDialog();
-            }
-            else
-            {
-                MessageBox.Show("Uğurla daxil olun!", "Məlumat Mesajı", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                MainForm mainForm = new MainForm(username, empid);
-                this.Hide();
-                mainForm.ShowDialog();
-            }
+            //int empid = user.EmployeeId;
+
+            //if (user.IsAdmin)
+            //{
+            //    MessageBox.Show("Uğurla daxil olun!", "Məlumat Mesajı", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            //    AdminDashboardForm admin = new AdminDashboardForm();
+            //    this.Hide();
+            //    admin.ShowDialog();
+            //}
+            //else
+            //{
+            //    MessageBox.Show("Uğurla daxil olun!", "Məlumat Mesajı", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            //    MainForm mainForm = new MainForm(username, empid);
+            //    this.Hide();
+            //    mainForm.ShowDialog();
+            //}
         }
     }
 }

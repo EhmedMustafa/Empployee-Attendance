@@ -47,17 +47,17 @@ namespace Empployee_Attendance
             txtaxtar.ForeColor = Color.Black;
         }
 
-        private void AdminDashboardForm_Load(object sender, EventArgs e)
-        {
-            var employees = _repo.GetAll();
-            dgvEmployees.DataSource = employees.Select(a => new
-            {
-                a.Ad_Familiya,
-                a.Istifadəçi_Adı,
-                a.Şifrə,
-                a.Admin
-            }).ToList();
-        }
+        //private async Task AdminDashboardForm_Load(object sender, EventArgs e)
+        //{
+        //    var employees = await _repo.GetAll();
+        //    dgvEmployees.DataSource = employees.Select(a => new
+        //    {
+        //        a.Ad_Familiya,
+        //        a.Istifadəçi_Adı,
+        //        a.Şifrə,
+        //        a.Admin
+        //    }).ToList();
+        //}
 
         private void dgvAttendance_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
@@ -105,9 +105,9 @@ namespace Empployee_Attendance
         }
 
 
-        private void LoadComboshop()
+        private async Task LoadComboshop()
         {
-            var shop = _repo.GetAllStores().ToList();
+            var shop = await _repo.GetAllStores();
 
             shop.Insert(0, new Store
             {
@@ -134,11 +134,11 @@ namespace Empployee_Attendance
             LoadComboshop();
         }
 
-        private void cmbStore_SelectedIndexChanged(object sender, EventArgs e)
+        private async Task cmbStore_SelectedIndexChanged(object sender, EventArgs e)
         {
             DateTime SelectedDate = DateTime.Now;
             int storeId = Convert.ToInt32(cmbStore.SelectedValue);
-            var data = _repo.GetAttendanceByStore(storeId, SelectedDate);
+            var data = await _repo.GetAttendanceByStore(storeId, SelectedDate);
             var analysisList = new List<AttendanceAnalysis>();
 
             foreach (var item in data)
@@ -224,12 +224,12 @@ namespace Empployee_Attendance
                      }).ToList();
         }
 
-        private void btnViewAttendance_Click(object sender, EventArgs e)
+        private async Task btnViewAttendance_Click(object sender, EventArgs e)
         {
             int storeId = Convert.ToInt32(cmbStore.SelectedValue);
             DateTime selectedDate = dtpDate.Value.Date;
 
-            var data = _repo.GetAttendanceByStoreAndDate(storeId, selectedDate);
+            var data = await _repo.GetAttendanceByStoreAndDate(storeId, selectedDate);
             string selectedStatus = FilterStatus.SelectedItem.ToString();
             var analysisList = new List<AttendanceAnalysis>();
 
@@ -325,12 +325,12 @@ namespace Empployee_Attendance
                      }).ToList();
         }
 
-        private void txtaxtar_TextChanged(object sender, EventArgs e)
+        private async Task txtaxtar_TextChanged(object sender, EventArgs e)
         {
             int storeId = Convert.ToInt32(cmbStore.SelectedValue);
             DateTime selectedDate = dtpDate.Value.Date;
             var str = txtaxtar.Text;
-            var data = _repo.Search(storeId, selectedDate, str);
+            var data = await _repo.Search(storeId, selectedDate, str);
 
 
 
@@ -420,7 +420,7 @@ namespace Empployee_Attendance
 
         }
 
-        private void FilterStatus_SelectedIndexChanged(object sender, EventArgs e)
+        private async Task FilterStatus_SelectedIndexChanged(object sender, EventArgs e)
         {
 
             if (FilterStatus.SelectedItem == null)
@@ -431,7 +431,7 @@ namespace Empployee_Attendance
             int storeId = Convert.ToInt32(cmbStore.SelectedValue);
             DateTime selectedDate = dtpDate.Value.Date;
 
-            var alldata = _repo.GetAttendanceByStoreAndDate(storeId, selectedDate);
+            var alldata = await _repo.GetAttendanceByStoreAndDate(storeId, selectedDate);
             string selectedStatus = FilterStatus.SelectedItem.ToString();
             var analysisList = new List<AttendanceAnalysis>();
 
@@ -533,7 +533,7 @@ namespace Empployee_Attendance
                      }).ToList();
         }
 
-        private void tabAttendance_Enter(object sender, EventArgs e)
+        private async Task tabAttendance_Enter(object sender, EventArgs e)
         {
             DateTime selectedDate = DateTime.Now;
 
@@ -541,7 +541,7 @@ namespace Empployee_Attendance
             int storeId = Convert.ToInt32(cmbStore.SelectedValue);
 
 
-            var alldata = _repo.GetAttendanceByStoreAndDate(storeId, selectedDate);
+            var alldata = await _repo.GetAttendanceByStoreAndDate(storeId, selectedDate);
 
 
             var analysisList = new List<AttendanceAnalysis>();
@@ -659,6 +659,18 @@ namespace Empployee_Attendance
             FilterStatus.DataSource = statusList;   // ComboBox-a əlavə et
             FilterStatus.SelectedIndex = 0;
             dtpDate.Value = DateTime.Today;
+        }
+
+        private async void AdminDashboardForm_Load(object sender, EventArgs e)
+        {
+            var employees = await _repo.GetAll();
+            dgvEmployees.DataSource = employees.Select(a => new
+            {
+                a.Ad_Familiya,
+                a.Istifadəçi_Adı,
+                a.Şifrə,
+                a.Admin
+            }).ToList();
         }
     }
 }
