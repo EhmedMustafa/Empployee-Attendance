@@ -259,50 +259,391 @@ app.get('/api/attendance/store/:storeId', authenticateToken, async (req, res) =>
 
 
 app.get('/api/shifts/today/:employeeId', async (req, res) => {
-    const { employeeId } = req.params;
+  const { employeeId } = req.params;
 
+  try {
+    const result = await pool.request()
+      .input('EmployeeId', sql.Int, employeeId)
+      .query(`
+        SELECT TOP 1 
+          e.FullName,
+          s.StoreName,
+          sh.StartTime,
+          sh.EndTime,
+          sh.DayOff
+        FROM Shifts sh
+        INNER JOIN Stores s ON s.StoreId = sh.StoreId
+        INNER JOIN Employees e ON e.EmployeeId = sh.EmployeeId
+        WHERE sh.EmployeeId = @EmployeeId
+          AND CAST(sh.Date AS DATE) = CAST(GETDATE() AS DATE)
+        ORDER BY sh.Date DESC;
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ message: 'Bugünkü növbə tapılmadı' });
+    }
+
+    const shift = result.recordset[0];
+
+    const formatTime = (value) => {
+      if (!value) return null;
+      if (typeof value === 'string') return value.substring(0, 5);
+
+      if (value instanceof Date) {
+        value.setHours(value.getHours() - 4); // 🇦🇿 UTC+4 düzəlişi
+        return value.toTimeString().substring(0, 5);
+      }
+      return null;
+    };
+
+    res.json({
+      FullName: shift.FullName,
+      StoreName: shift.StoreName,
+      StartTime: formatTime(shift.StartTime),
+      EndTime: formatTime(shift.EndTime),
+      DayOff: shift.DayOff
+    });
+  } catch (error) {
+    console.error('❌ Shift query error:', error);
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+});
+
+
+
+app.get('/api/attendance/all', async (req, res) => {
     try {
         if (!pool) {
             return res.status(500).json({ error: 'Database not connected yet' });
         }
 
-        const result = await pool.request()
-            .input('EmployeeId', sql.Int, employeeId)
-            .query(`
-                SELECT  
-                    e.FullName,
-                    s.StoreName,
-                    sh.StartTime,
-                    sh.EndTime,
-                    sh.DayOff
-                FROM Shifts sh
-                INNER JOIN Stores s ON s.StoreId = sh.StoreId
-                INNER JOIN Employees e ON e.EmployeeId = sh.EmployeeId
-                WHERE sh.EmployeeId = @EmployeeId 
-                  AND CAST(sh.[Date] AS DATE) = CAST(GETDATE() AS DATE)
-            `);
+        const result = await pool.request().query(`
+            SELECT 
+                e.UserName AS EmployeeName,
+                s.StoreName,
+                CASE 
+                    WHEN a.Date IS NOT NULL THEN CAST(a.Date AS DATE)
+                    ELSE CAST(GETDATE() AS DATE)
+                END AS Date,
+                ISNULL(sh.DayOff, 0) AS DayOff, 
+                CASE
+                    WHEN sh.DayOff = 1 THEN N'İstirahət' ELSE ''
+                END AS ShiftDisplay,
+                sh.StartTime AS ShiftStart,
+                sh.EndTime AS ShiftEnd,
+                a.CheckIn,
+                a.CheckOut
+            FROM Employees e
+            LEFT JOIN Shifts sh 
+                ON sh.EmployeeId = e.EmployeeId
+                AND CAST(sh.Date AS DATE) = CAST(GETDATE() AS DATE)
+            LEFT JOIN Stores s 
+                ON s.StoreId = sh.StoreId
+            LEFT JOIN Attendance a 
+                ON a.EmployeeId = e.EmployeeId
+                AND (a.StoreId = s.StoreId OR a.StoreId IS NULL)
+                AND a.Date = sh.Date
+            ORDER BY e.EmployeeId
+        `);
 
-        if (result.recordset.length === 0) {
-            return res.status(404).json({ message: 'Bugünkü növbə tapılmadı' });
-        }
+        // Məlumatları qaytarırıq
+        const data = result.recordset.map(row => ({
+            EmployeeName: row.EmployeeName,
+            StoreName: row.StoreName,
+            Date: row.Date,
+            DayOff: row.DayOff,
+            ShiftDisplay: row.ShiftDisplay,
+            ShiftStart: row.ShiftStart ? `${row.ShiftStart.getHours().toString().padStart(2,'0')}:${row.ShiftStart.getMinutes().toString().padStart(2,'0')}` : null,
+            ShiftEnd: row.ShiftEnd ? `${row.ShiftEnd.getHours().toString().padStart(2,'0')}:${row.ShiftEnd.getMinutes().toString().padStart(2,'0')}` : null,
+            CheckIn: row.CheckIn,
+            CheckOut: row.CheckOut
+        }));
 
-        // API-dən TimeSpan string göndəririk
-        const shift = result.recordset[0];
-        const startTime = shift.StartTime ? `${shift.StartTime.getHours().toString().padStart(2,'0')}:${shift.StartTime.getMinutes().toString().padStart(2,'0')}` : null;
-        const endTime = shift.EndTime ? `${shift.EndTime.getHours().toString().padStart(2,'0')}:${shift.EndTime.getMinutes().toString().padStart(2,'0')}` : null;
-
-        res.json({
-            FullName: shift.FullName,
-            StoreName: shift.StoreName,
-            StartTime: startTime,
-            EndTime: endTime,
-            DayOff: shift.DayOff
-        });
+        res.json(data);
     } catch (error) {
-        console.error('❌ Shift query error:', error);
+        console.error('❌ Error fetching all employee attendance:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
+
+
+app.get('/api/attendance/store/:storeId/date/:selectedDate', async (req, res) => {
+  const { storeId, selectedDate } = req.params;
+
+  try {
+    const result = await pool.request()
+      .input('StoreId', sql.Int, parseInt(storeId))
+      .input('SelectedDate', sql.Date, new Date(selectedDate))
+      .query(`
+          SELECT 
+              e.EmployeeId,
+              e.UserName AS EmployeeName,
+              s.StoreId,
+              s.StoreName,
+              CASE 
+                  WHEN a.Date IS NOT NULL THEN CAST(a.Date AS DATE)
+                  WHEN sh.DayOff = 1 THEN @SelectedDate
+                  ELSE @SelectedDate
+              END AS Date,
+              ISNULL(sh.DayOff, 0) AS DayOff,
+              CASE
+                WHEN sh.DayOff = 1 THEN 'İstirahət' ELSE ''
+            END AS ShiftDisplay,
+              sh.StartTime AS ShiftStart,
+              sh.EndTime AS ShiftEnd,
+              a.CheckIn,
+              a.CheckOut
+          FROM Employees e
+          LEFT JOIN Shifts sh 
+              ON sh.EmployeeId = e.EmployeeId
+             AND CAST(sh.Date AS DATE) = @SelectedDate
+          LEFT JOIN Stores s 
+              ON s.StoreId = sh.StoreId
+          LEFT JOIN Attendance a 
+              ON a.EmployeeId = e.EmployeeId
+             AND CAST(a.Date AS DATE) = @SelectedDate
+          WHERE 
+              (@StoreId = 0 OR s.StoreId = @StoreId OR s.StoreId IS NULL)
+          ORDER BY e.EmployeeId, sh.StartTime
+      `);
+
+    // SQL Server TIME tipini JSON-da "HH:mm:ss" şəklində göndər
+    const attendanceData = result.recordset.map(r => ({
+      ...r,
+      ShiftStart: r.ShiftStart ? r.ShiftStart.toISOString().substr(11, 8) : null,
+      ShiftEnd: r.ShiftEnd ? r.ShiftEnd.toISOString().substr(11, 8) : null
+    }));
+
+    res.json(attendanceData);
+  } catch (err) {
+    console.error('Error fetching attendance:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/attendance/store/:storeId', async (req, res) => {
+    const storeId = parseInt(req.params.storeId);
+    const selectedDate = req.query.date ? new Date(req.query.date) : new Date();
+
+    try {
+        const pool = await sql.connect(config);
+
+        const query = `
+            SELECT 
+                e.EmployeeId,
+                e.UserName AS EmployeeName,
+                s.StoreId,
+                s.StoreName,
+                CASE 
+                    WHEN a.Date IS NOT NULL THEN CAST(a.Date AS DATE)
+                    WHEN sh.DayOff = 1 THEN @SelectedDate
+                    ELSE CAST(GETDATE() AS DATE)
+                END AS Date,
+                ISNULL(sh.DayOff, 0) AS DayOff,
+                CASE WHEN sh.DayOff = 1 THEN N'İstirahət' ELSE '' END AS ShiftDisplay,
+                FORMAT(sh.StartTime, 'HH:mm') AS ShiftStart,
+                FORMAT(sh.EndTime, 'HH:mm') AS ShiftEnd,
+                a.CheckIn,
+                a.CheckOut
+            FROM Employees e
+            LEFT JOIN Shifts sh 
+                ON sh.EmployeeId = e.EmployeeId
+                AND CAST(sh.Date AS DATE) = CAST(@SelectedDate AS DATE)
+            LEFT JOIN Stores s 
+                ON s.StoreId = sh.StoreId
+            LEFT JOIN Attendance a 
+                ON a.EmployeeId = e.EmployeeId
+                AND CAST(a.Date AS DATE) = CAST(@SelectedDate AS DATE)
+            WHERE (@StoreId = 0 OR s.StoreId = @StoreId OR s.StoreId IS NULL)
+            ORDER BY e.EmployeeId, sh.StartTime;
+        `;
+
+        const result = await pool.request()
+            .input('StoreId', sql.Int, storeId)
+            .input('SelectedDate', sql.Date, selectedDate)
+            .query(query);
+
+        // JSON formatına çevirmək (C# DTO uyğunluğu üçün)
+        const data = result.recordset.map(row => ({
+            employeeId: row.EmployeeId,
+            employeeName: row.EmployeeName,
+            storeId: row.StoreId,
+            storeName: row.StoreName,
+            date: row.Date,
+            dayOff: !!row.DayOff,
+            ShiftStart: r.ShiftStart ? r.ShiftStart.toISOString().substr(11, 8) : null,
+            ShiftEnd: r.ShiftEnd ? r.ShiftEnd.toISOString().substr(11, 8) : null,
+            checkIn: row.CheckIn,
+            checkOut: row.CheckOut,
+            shiftDisplay: row.DayOff
+                ? 'İstirahət'
+                : `${row.ShiftStart} - ${row.ShiftEnd}`
+        }));
+
+        res.json(data);
+
+    } catch (err) {
+        console.error('❌ Database error:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
+app.get('/api/attendance', async (req, res) => {
+  try {
+    const storeId = req.query.storeId ? parseInt(req.query.storeId) : 0;
+
+    let selectedDate;
+    if (req.query.date) {
+      // 🔹 UTC tarix yaratmaq üçün toISOString istifadə edirik
+      const [year, month, day] = req.query.date.split('-');
+      selectedDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    } else {
+      const now = new Date();
+      selectedDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    }
+
+    console.log("📅 SelectedDate (UTC):", selectedDate);
+
+    const query = `
+      SELECT 
+          e.EmployeeId,
+          e.UserName AS EmployeeName,
+          s.StoreId,
+          s.StoreName,
+          CASE 
+              WHEN a.Date IS NOT NULL THEN CAST(a.Date AS DATE)
+              ELSE @SelectedDate
+          END AS Date,
+          ISNULL(sh.DayOff, 0) AS DayOff,
+          CONVERT(varchar(5), sh.StartTime, 108) AS ShiftStart,
+          CONVERT(varchar(5), sh.EndTime, 108) AS ShiftEnd,
+          a.CheckIn,
+          a.CheckOut
+      FROM Employees e
+      LEFT JOIN Shifts sh 
+          ON sh.EmployeeId = e.EmployeeId
+          AND CAST(sh.Date AS DATE) = CAST(@SelectedDate AS DATE)
+      LEFT JOIN Stores s 
+          ON s.StoreId = sh.StoreId
+      LEFT JOIN Attendance a 
+          ON a.EmployeeId = e.EmployeeId
+          AND CAST(a.Date AS DATE) = CAST(@SelectedDate AS DATE)
+      WHERE (@StoreId = 0 OR s.StoreId = @StoreId)
+      ORDER BY e.EmployeeId, sh.StartTime;
+    `;
+
+    const result = await pool.request()
+      .input('StoreId', sql.Int, storeId)
+      .input('SelectedDate', sql.Date, selectedDate)
+      .query(query);
+
+    const data = result.recordset.map(row => ({
+      employeeId: row.EmployeeId,
+      employeeName: row.EmployeeName,
+      storeId: row.StoreId,
+      storeName: row.StoreName,
+      date: row.Date,
+      dayOff: !!row.DayOff,
+      shiftStart: row.ShiftStart,
+      shiftEnd: row.ShiftEnd,
+      checkIn: row.CheckIn,
+      checkOut: row.CheckOut,
+      shiftDisplay: row.DayOff ? 'İstirahət' : `${row.ShiftStart} - ${row.ShiftEnd}`
+    }));
+
+    res.json(data);
+  } catch (err) {
+    console.error('❌ Error:', err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+app.get('/api/attendance/search', async (req, res) => {
+  try {
+    const storeId = req.query.storeId ? parseInt(req.query.storeId) : 0;
+    const searchText = req.query.search ? req.query.search.trim() : '';
+
+
+     let selectedDate;
+    if (req.query.date) {
+      // 🔹 UTC tarix yaratmaq üçün toISOString istifadə edirik
+      const [year, month, day] = req.query.date.split('-');
+      selectedDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    } else {
+      const now = new Date();
+      selectedDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    }
+
+    console.log("📅 SelectedDate (UTC):", selectedDate); 
+    //const pool = await sql.connect(config);
+
+    const query = `
+      SELECT 
+          e.EmployeeId,
+          e.UserName AS EmployeeName,
+          s.StoreId,
+          s.StoreName,
+          CASE 
+              WHEN a.Date IS NOT NULL THEN CAST(a.Date AS DATE)
+              WHEN sh.DayOff = 1 THEN @SelectedDate
+              ELSE @SelectedDate
+          END AS Date,
+          ISNULL(sh.DayOff, 0) AS DayOff, 
+          CASE
+              WHEN sh.DayOff = 1 THEN N'İstirahət' ELSE ''
+          END AS ShiftDisplay,
+          CONVERT(varchar(5), sh.StartTime, 108) AS ShiftStart,
+          CONVERT(varchar(5), sh.EndTime, 108) AS ShiftEnd,
+          a.CheckIn,
+          a.CheckOut
+      FROM Employees e
+      LEFT JOIN Shifts sh 
+          ON sh.EmployeeId = e.EmployeeId
+          AND CAST(sh.Date AS DATE) = CAST(@SelectedDate AS DATE)
+      LEFT JOIN Stores s 
+          ON s.StoreId = sh.StoreId
+      LEFT JOIN Attendance a 
+          ON a.EmployeeId = e.EmployeeId
+          AND CAST(a.Date AS DATE) = CAST(@SelectedDate AS DATE)
+      WHERE 
+          (@StoreId = 0 OR s.StoreId = @StoreId OR s.StoreId IS NULL)
+          AND (e.UserName LIKE '%' + @SearchText + '%')
+      ORDER BY e.EmployeeId, sh.StartTime;
+    `;
+
+    const result = await pool.request()
+      .input('StoreId', sql.Int, storeId)
+      .input('SelectedDate', sql.Date, selectedDate)
+      .input('SearchText', sql.NVarChar, searchText)
+      .query(query);
+
+    const data = result.recordset.map(row => ({
+      employeeId: row.EmployeeId,
+      employeeName: row.EmployeeName,
+      storeId: row.StoreId,
+      storeName: row.StoreName,
+      date: row.Date,
+      dayOff: !!row.DayOff,
+      shiftStart: row.ShiftStart,
+      shiftEnd: row.ShiftEnd,
+      checkIn: row.CheckIn,
+      checkOut: row.CheckOut,
+      shiftDisplay: row.ShiftDisplay || 
+        (row.DayOff ? 'İstirahət' : `${row.ShiftStart || ''} - ${row.ShiftEnd || ''}`)
+    }));
+
+    res.json(data);
+
+  } catch (err) {
+    console.error('❌ Error:', err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

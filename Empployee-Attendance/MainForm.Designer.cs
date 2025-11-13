@@ -132,7 +132,7 @@
             // 
             // btnCheckOut
             // 
-            btnCheckOut.BackColor = Color.Goldenrod;
+            btnCheckOut.BackColor = Color.DarkRed;
             btnCheckOut.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             btnCheckOut.Location = new Point(340, 249);
             btnCheckOut.Name = "btnCheckOut";

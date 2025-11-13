@@ -191,9 +191,11 @@
             tabAttendance.Size = new Size(1638, 628);
             tabAttendance.TabIndex = 1;
             tabAttendance.Text = "Davranış Cədvəli";
+            tabAttendance.Enter += tabAttendance_Enter;
             // 
             // FilterStatus
             // 
+            FilterStatus.DropDownStyle = ComboBoxStyle.DropDownList;
             FilterStatus.FormattingEnabled = true;
             FilterStatus.Location = new Point(1438, 40);
             FilterStatus.Margin = new Padding(4, 3, 4, 3);
@@ -223,6 +225,7 @@
             txtaxtar.TabIndex = 5;
             txtaxtar.Text = "axtar....";
             txtaxtar.Click += txtaxtar_Click;
+            txtaxtar.TextChanged += txtaxtar_TextChanged;
             // 
             // dgvAttendance
             // 
@@ -253,7 +256,7 @@
             dataGridViewCellStyle2.WrapMode = DataGridViewTriState.False;
             dgvAttendance.DefaultCellStyle = dataGridViewCellStyle2;
             dgvAttendance.EnableHeadersVisualStyles = false;
-            dgvAttendance.Location = new Point(20, 90);
+            dgvAttendance.Location = new Point(20, 96);
             dgvAttendance.Margin = new Padding(4, 3, 4, 3);
             dgvAttendance.Name = "dgvAttendance";
             dgvAttendance.ReadOnly = true;
@@ -289,6 +292,8 @@
             cmbStore.Name = "cmbStore";
             cmbStore.Size = new Size(200, 25);
             cmbStore.TabIndex = 0;
+            cmbStore.SelectedIndexChanged += cmbStore_SelectedIndexChanged;
+            cmbStore.Click += cmbStore_Click;
             cmbStore.Enter += cmbStore_Enter;
             // 
             // label1
@@ -324,6 +329,7 @@
             btnViewAttendance.TabIndex = 3;
             btnViewAttendance.Text = "Cədvəli göstər";
             btnViewAttendance.UseVisualStyleBackColor = false;
+            btnViewAttendance.Click += btnViewAttendance_Click;
             // 
             // timer
             // 

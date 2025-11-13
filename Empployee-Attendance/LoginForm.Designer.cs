@@ -51,7 +51,7 @@
             txtUsername.BorderStyle = BorderStyle.None;
             txtUsername.Font = new Font("Arial", 11.25F);
             txtUsername.ForeColor = Color.WhiteSmoke;
-            txtUsername.Location = new Point(61, 238);
+            txtUsername.Location = new Point(55, 238);
             txtUsername.Margin = new Padding(4, 3, 4, 3);
             txtUsername.Name = "txtUsername";
             txtUsername.Size = new Size(198, 18);
@@ -64,7 +64,7 @@
             txtPassword.BackColor = Color.FromArgb(34, 49, 71);
             txtPassword.BorderStyle = BorderStyle.None;
             txtPassword.ForeColor = Color.White;
-            txtPassword.Location = new Point(61, 303);
+            txtPassword.Location = new Point(55, 303);
             txtPassword.Margin = new Padding(4, 3, 4, 3);
             txtPassword.Name = "txtPassword";
             txtPassword.Size = new Size(198, 16);
@@ -81,8 +81,8 @@
             btnLogin.FlatAppearance.MouseDownBackColor = Color.Lime;
             btnLogin.FlatAppearance.MouseOverBackColor = Color.Teal;
             btnLogin.FlatStyle = FlatStyle.Flat;
-            btnLogin.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 204);
-            btnLogin.Location = new Point(45, 365);
+            btnLogin.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 204);
+            btnLogin.Location = new Point(39, 365);
             btnLogin.Margin = new Padding(4, 3, 4, 3);
             btnLogin.Name = "btnLogin";
             btnLogin.Size = new Size(213, 41);
@@ -122,7 +122,7 @@
             // panel1
             // 
             panel1.BackColor = Color.White;
-            panel1.Location = new Point(24, 328);
+            panel1.Location = new Point(18, 328);
             panel1.Margin = new Padding(4, 3, 4, 3);
             panel1.Name = "panel1";
             panel1.Size = new Size(250, 1);
@@ -131,7 +131,7 @@
             // panel2
             // 
             panel2.BackColor = Color.White;
-            panel2.Location = new Point(24, 262);
+            panel2.Location = new Point(18, 262);
             panel2.Margin = new Padding(4, 3, 4, 3);
             panel2.Name = "panel2";
             panel2.Size = new Size(250, 1);
@@ -143,7 +143,7 @@
             checkBox1.Cursor = Cursors.Hand;
             checkBox1.Font = new Font("Segoe UI", 8F, FontStyle.Bold, GraphicsUnit.Point, 0);
             checkBox1.ForeColor = Color.White;
-            checkBox1.Location = new Point(181, 334);
+            checkBox1.Location = new Point(175, 334);
             checkBox1.Margin = new Padding(4, 3, 4, 3);
             checkBox1.Name = "checkBox1";
             checkBox1.Size = new Size(95, 17);
@@ -158,7 +158,7 @@
             pictureBox3.Location = new Point(48, 20);
             pictureBox3.Margin = new Padding(4, 3, 4, 3);
             pictureBox3.Name = "pictureBox3";
-            pictureBox3.Size = new Size(210, 165);
+            pictureBox3.Size = new Size(200, 165);
             pictureBox3.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox3.TabIndex = 15;
             pictureBox3.TabStop = false;
@@ -166,7 +166,7 @@
             // pictureBox2
             // 
             pictureBox2.Image = Properties.Resources.icons8_password_50;
-            pictureBox2.Location = new Point(24, 293);
+            pictureBox2.Location = new Point(18, 293);
             pictureBox2.Margin = new Padding(4, 3, 4, 3);
             pictureBox2.Name = "pictureBox2";
             pictureBox2.Size = new Size(34, 33);
@@ -177,7 +177,7 @@
             // pictureBox1
             // 
             pictureBox1.Image = Properties.Resources.icons8_user_50;
-            pictureBox1.Location = new Point(26, 228);
+            pictureBox1.Location = new Point(20, 228);
             pictureBox1.Margin = new Padding(4, 3, 4, 3);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(34, 33);
@@ -190,7 +190,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(34, 49, 71);
-            ClientSize = new Size(299, 426);
+            ClientSize = new Size(290, 426);
             Controls.Add(pictureBox3);
             Controls.Add(checkBox1);
             Controls.Add(pictureBox2);

@@ -8,6 +8,7 @@ using System.Linq;
 using Empployee_Attendance.Dto;
 using Empployee_Attendance.Models;
 using Newtonsoft.Json;
+using System.Net.Http.Headers;
 
 namespace Empployee_Attendance.Repository
 {
@@ -234,10 +235,13 @@ namespace Empployee_Attendance.Repository
         {
             try
             {
-                var response = await _httpClient.GetAsync("/attendance/all");
+                var response = await _httpClient.GetAsync("attendance/all");
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<List<EmployeeShiftAttendanceDto>>();
+                    var json = await response.Content.ReadAsStringAsync();
+                    var attendances = JsonConvert.DeserializeObject<List<EmployeeShiftAttendanceDto>>(json);
+                    return attendances ?? new List<EmployeeShiftAttendanceDto>();
+                    //return await response.Content.ReadFromJsonAsync<List<EmployeeShiftAttendanceDto>>();
                 }
                 return new List<EmployeeShiftAttendanceDto>();
             }
@@ -251,11 +255,15 @@ namespace Empployee_Attendance.Repository
         public async Task<IEnumerable<EmployeeShiftAttendanceDto>> GetAttendanceByStore(int storeId, DateTime selectedDate)
         {
             try
+
             {
-                var response = await _httpClient.GetAsync($"/attendance/store/{storeId}?date={selectedDate:yyyy-MM-dd}");
+                var response = await _httpClient.GetAsync($"attendance/store/{storeId}?date={selectedDate:yyyy-MM-dd}");
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<IEnumerable<EmployeeShiftAttendanceDto>>();
+                    var json = await response.Content.ReadAsStringAsync();
+                    var employeesshift = JsonConvert.DeserializeObject<IEnumerable<EmployeeShiftAttendanceDto>>(json);
+                    return employeesshift ?? new List<EmployeeShiftAttendanceDto>();
+                   // return await response.Content.ReadFromJsonAsync<IEnumerable<EmployeeShiftAttendanceDto>>();
                 }
                 return new List<EmployeeShiftAttendanceDto>();
             }
@@ -271,10 +279,13 @@ namespace Empployee_Attendance.Repository
         {
             try
             {
-                var response = await _httpClient.GetAsync("/stores");
+                var response = await _httpClient.GetAsync("stores");
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<List<Store>>();
+                    var json= await response.Content.ReadAsStringAsync();
+                    var stores = JsonConvert.DeserializeObject<List<Store>>(json);
+                    return stores ?? new List<Store>();
+                    //return await response.Content.ReadFromJsonAsync<List<Store>>();
                 }
                 return new List<Store>();
             }
@@ -291,10 +302,14 @@ namespace Empployee_Attendance.Repository
         {
             try
             {
-                var response = await _httpClient.GetAsync($"/attendance/store/{storeId}/date/{selectedDate:yyyy-MM-dd}");
+                var response = await _httpClient.GetAsync($"attendance?storeId={storeId}&date={selectedDate:yyyy-MM-dd}");
+
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<IEnumerable<EmployeeShiftAttendanceDto>>();
+                    var json= await response.Content.ReadAsStringAsync();
+                    var employeesshift = JsonConvert.DeserializeObject<IEnumerable<EmployeeShiftAttendanceDto>>(json);
+                    return employeesshift ?? new List<EmployeeShiftAttendanceDto>();
+                   // return await response.Content.ReadFromJsonAsync<IEnumerable<EmployeeShiftAttendanceDto>>();
                 }
                 return new List<EmployeeShiftAttendanceDto>();
             }
@@ -311,10 +326,13 @@ namespace Empployee_Attendance.Repository
         {
             try
             {
-                var response = await _httpClient.GetAsync($"/attendance/search?storeId={storeId}&date={selectedDate:yyyy-MM-dd}&search={Uri.EscapeDataString(search)}");
+                var response = await _httpClient.GetAsync($"attendance/search?storeId={storeId}&date={selectedDate:yyyy-MM-dd}&search={Uri.EscapeDataString(search)}");
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<List<EmployeeShiftAttendanceDto>>();
+                    var json= await response.Content.ReadAsStringAsync();
+                    var employeesshift = JsonConvert.DeserializeObject<List<EmployeeShiftAttendanceDto>>(json);
+                    return employeesshift ?? new List<EmployeeShiftAttendanceDto>();
+                    //return await response.Content.ReadFromJsonAsync<List<EmployeeShiftAttendanceDto>>();
                 }
                 return new List<EmployeeShiftAttendanceDto>();
             }

@@ -124,301 +124,21 @@ namespace Empployee_Attendance
             LoadComboshop();
         }
 
-        private void cmbStore_Enter(object sender, EventArgs e)
-        {
-            LoadComboshop();
-        }
+
 
         private void tabControl_Enter(object sender, EventArgs e)
         {
             LoadComboshop();
         }
 
-        private async Task cmbStore_SelectedIndexChanged(object sender, EventArgs e)
+
+
+        private void cmbStore_Click(object sender, EventArgs e)
         {
-            DateTime SelectedDate = DateTime.Now;
-            int storeId = Convert.ToInt32(cmbStore.SelectedValue);
-            var data = await _repo.GetAttendanceByStore(storeId, SelectedDate);
-            var analysisList = new List<AttendanceAnalysis>();
-
-            foreach (var item in data)
-            {
-                if (item.ShiftStart.HasValue && item.ShiftEnd.HasValue)
-                {
-                    var shift = new ShiftsDtos
-                    {
-                        StartTime = item.ShiftStart.Value,
-                        EndTime = item.ShiftEnd.Value,
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-                    };
-
-                    var attendance = new Attendance
-
-                    {
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-                        Date = item.Date,
-                        CheckIn = item.CheckIn,
-                        CheckOut = item.CheckOut
-                    };
-
-                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
-                    analitics.EmployeeId = item.EmployeeId;
-                    analitics.StoreId = item.StoreId;
-                    analitics.EmployeeName = item.EmployeeName;
-                    analitics.StoreName = item.StoreName;
-                    analitics.ShiftDisplay = item.ShiftDisplay;
-
-
-
-                    analysisList.Add(analitics);
-
-                }
-                else if (item.DayOff == true)
-                {
-
-                    var shift = new ShiftsDtos
-                    {
-                        StartTime = item.ShiftStart,
-                        EndTime = item.ShiftEnd,
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-
-                    };
-
-                    var attendance = new Attendance
-
-                    {
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-                        Date = item.Date,
-                        CheckIn = item.CheckIn,
-                        CheckOut = item.CheckOut
-                    };
-
-                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
-                    analitics.EmployeeId = item.EmployeeId;
-                    analitics.StoreId = item.StoreId;
-                    analitics.EmployeeName = item.EmployeeName;
-                    analitics.StoreName = item.StoreName;
-                    analitics.ShiftDisplay = item.ShiftDisplay;
-                    analitics.Status = "Istirahət";
-
-                    analysisList.Add(analitics);
-
-                }
-            }
-            dgvAttendance.DataSource = analysisList
-                     .Select(a => new
-                     {
-                         a.Ad_Familiya,
-                         a.Mağaza_Adı,
-                         a.Tarix,
-                         a.Növbə,
-                         a.Giriş_vaxtı,
-                         a.Çıxış_Vaxtı,
-                         a.Gecikmə,
-                         a.Icazə,
-                         a.Status
-                     }).ToList();
+            LoadComboshop();
         }
 
-        private async Task btnViewAttendance_Click(object sender, EventArgs e)
-        {
-            int storeId = Convert.ToInt32(cmbStore.SelectedValue);
-            DateTime selectedDate = dtpDate.Value.Date;
 
-            var data = await _repo.GetAttendanceByStoreAndDate(storeId, selectedDate);
-            string selectedStatus = FilterStatus.SelectedItem.ToString();
-            var analysisList = new List<AttendanceAnalysis>();
-
-            foreach (var item in data)
-            {
-                if (item.ShiftStart.HasValue && item.ShiftEnd.HasValue)
-                {
-                    var shift = new ShiftsDtos
-                    {
-                        StartTime = item.ShiftStart.Value,
-                        EndTime = item.ShiftEnd.Value,
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-                    };
-
-                    var attendance = new Attendance
-
-                    {
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-                        Date = item.Date,
-                        CheckIn = item.CheckIn,
-                        CheckOut = item.CheckOut
-                    };
-
-                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
-                    analitics.EmployeeId = item.EmployeeId;
-                    analitics.StoreId = item.StoreId;
-                    //analitics.Date = item.Date;
-                    analitics.EmployeeName = item.EmployeeName;
-                    analitics.StoreName = item.StoreName;
-                    analitics.ShiftDisplay = item.ShiftDisplay;
-
-
-
-                    analysisList.Add(analitics);
-
-                }
-                else if (item.DayOff == true)
-                {
-
-                    var shift = new ShiftsDtos
-                    {
-                        StartTime = item.ShiftStart,
-                        EndTime = item.ShiftEnd,
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-
-                    };
-
-                    var attendance = new Attendance
-
-                    {
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-                        Date = item.Date,
-                        CheckIn = item.CheckIn,
-                        CheckOut = item.CheckOut
-                    };
-
-                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
-                    analitics.EmployeeId = item.EmployeeId;
-                    analitics.StoreId = item.StoreId;
-                    analitics.EmployeeName = item.EmployeeName;
-                    analitics.StoreName = item.StoreName;
-                    analitics.ShiftDisplay = item.ShiftDisplay;
-                    analitics.Status = "Istirahət";
-
-                    analysisList.Add(analitics);
-
-                }
-            }
-            List<AttendanceAnalysis> filteredList;
-            if (selectedStatus == "Bütün")
-                filteredList = analysisList;
-            else
-                filteredList = analysisList
-                    .Where(x => string.Equals(x.Status?.Trim(), selectedStatus, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-
-            dgvAttendance.DataSource = filteredList
-                     .Select(a => new
-                     {
-                         a.Ad_Familiya,
-                         a.Mağaza_Adı,
-                         a.Tarix,
-                         a.Növbə,
-                         a.Giriş_vaxtı,
-                         a.Çıxış_Vaxtı,
-                         a.Gecikmə,
-                         a.Icazə,
-                         a.Status
-                     }).ToList();
-        }
-
-        private async Task txtaxtar_TextChanged(object sender, EventArgs e)
-        {
-            int storeId = Convert.ToInt32(cmbStore.SelectedValue);
-            DateTime selectedDate = dtpDate.Value.Date;
-            var str = txtaxtar.Text;
-            var data = await _repo.Search(storeId, selectedDate, str);
-
-
-
-            var analysisList = new List<AttendanceAnalysis>();
-
-            foreach (var item in data)
-            {
-                if (item.ShiftStart.HasValue && item.ShiftEnd.HasValue)
-                {
-                    var shift = new ShiftsDtos
-                    {
-                        StartTime = item.ShiftStart.Value,
-                        EndTime = item.ShiftEnd.Value,
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-                    };
-
-                    var attendance = new Attendance
-
-                    {
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-                        Date = item.Date,
-                        CheckIn = item.CheckIn,
-                        CheckOut = item.CheckOut
-                    };
-
-                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
-                    analitics.EmployeeId = item.EmployeeId;
-                    analitics.StoreId = item.StoreId;
-                    analitics.EmployeeName = item.EmployeeName;
-                    analitics.StoreName = item.StoreName;
-                    analitics.ShiftDisplay = item.ShiftDisplay;
-
-
-
-                    analysisList.Add(analitics);
-
-                }
-                else if (item.DayOff == true)
-                {
-
-                    var shift = new ShiftsDtos
-                    {
-                        StartTime = item.ShiftStart,
-                        EndTime = item.ShiftEnd,
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-
-                    };
-
-                    var attendance = new Attendance
-
-                    {
-                        EmployeeId = item.EmployeeId,
-                        StoreId = item.StoreId,
-                        Date = item.Date,
-                        CheckIn = item.CheckIn,
-                        CheckOut = item.CheckOut
-                    };
-
-                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
-                    analitics.EmployeeId = item.EmployeeId;
-                    analitics.StoreId = item.StoreId;
-                    analitics.EmployeeName = item.EmployeeName;
-                    analitics.StoreName = item.StoreName;
-                    analitics.ShiftDisplay = item.ShiftDisplay;
-                    analitics.Status = "Istirahət";
-
-                    analysisList.Add(analitics);
-
-                }
-            }
-            dgvAttendance.DataSource = analysisList
-                     .Select(a => new
-                     {
-                         a.Ad_Familiya,
-                         a.Mağaza_Adı,
-                         a.Tarix,
-                         a.Növbə,
-                         a.Giriş_vaxtı,
-                         a.Çıxış_Vaxtı,
-                         a.Gecikmə,
-                         a.Icazə,
-                         a.Status
-                     }).ToList();
-
-        }
 
         private async Task FilterStatus_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -533,7 +253,21 @@ namespace Empployee_Attendance
                      }).ToList();
         }
 
-        private async Task tabAttendance_Enter(object sender, EventArgs e)
+
+
+        private async void AdminDashboardForm_Load(object sender, EventArgs e)
+        {
+            var employees = await _repo.GetAll();
+            dgvEmployees.DataSource = employees.Select(a => new
+            {
+                a.Ad_Familiya,
+                a.Istifadəçi_Adı,
+                a.Şifrə,
+                a.Admin
+            }).ToList();
+        }
+
+        private async void tabAttendance_Enter(object sender, EventArgs e)
         {
             DateTime selectedDate = DateTime.Now;
 
@@ -661,16 +395,313 @@ namespace Empployee_Attendance
             dtpDate.Value = DateTime.Today;
         }
 
-        private async void AdminDashboardForm_Load(object sender, EventArgs e)
+        private void cmbStore_Enter(object sender, EventArgs e)
         {
-            var employees = await _repo.GetAll();
-            dgvEmployees.DataSource = employees.Select(a => new
-            {
-                a.Ad_Familiya,
-                a.Istifadəçi_Adı,
-                a.Şifrə,
-                a.Admin
-            }).ToList();
+            LoadComboshop();
         }
+
+        private async void btnViewAttendance_Click(object sender, EventArgs e)
+        {
+            int storeId = Convert.ToInt32(cmbStore.SelectedValue);
+            DateTime selectedDate = dtpDate.Value.Date;
+
+            var data = await _repo.GetAttendanceByStoreAndDate(storeId, selectedDate);
+            string selectedStatus = FilterStatus.SelectedItem.ToString();
+            var analysisList = new List<AttendanceAnalysis>();
+
+            foreach (var item in data)
+            {
+                if (item.ShiftStart.HasValue && item.ShiftEnd.HasValue)
+                {
+                    var shift = new ShiftsDtos
+                    {
+                        StartTime = item.ShiftStart.Value,
+                        EndTime = item.ShiftEnd.Value,
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+                    };
+
+                    var attendance = new Attendance
+
+                    {
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+                        Date = item.Date,
+                        CheckIn = item.CheckIn,
+                        CheckOut = item.CheckOut
+                    };
+
+                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
+                    analitics.EmployeeId = item.EmployeeId;
+                    analitics.StoreId = item.StoreId;
+                    //analitics.Date = item.Date;
+                    analitics.EmployeeName = item.EmployeeName;
+                    analitics.StoreName = item.StoreName;
+                    analitics.ShiftDisplay = item.ShiftDisplay;
+
+
+
+                    analysisList.Add(analitics);
+
+                }
+                else if (item.DayOff == true)
+                {
+
+                    var shift = new ShiftsDtos
+                    {
+                        StartTime = item.ShiftStart,
+                        EndTime = item.ShiftEnd,
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+
+                    };
+
+                    var attendance = new Attendance
+
+                    {
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+                        Date = item.Date,
+                        CheckIn = item.CheckIn,
+                        CheckOut = item.CheckOut
+                    };
+
+                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
+                    analitics.EmployeeId = item.EmployeeId;
+                    analitics.StoreId = item.StoreId;
+                    analitics.EmployeeName = item.EmployeeName;
+                    analitics.StoreName = item.StoreName;
+                    analitics.ShiftDisplay = item.ShiftDisplay;
+                    analitics.Status = "Istirahət";
+
+                    analysisList.Add(analitics);
+
+                }
+            }
+            List<AttendanceAnalysis> filteredList;
+            if (selectedStatus == "Bütün")
+                filteredList = analysisList;
+            else
+                filteredList = analysisList
+                    .Where(x => string.Equals(x.Status?.Trim(), selectedStatus, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+            dgvAttendance.DataSource = filteredList
+                     .Select(a => new
+                     {
+                         a.Ad_Familiya,
+                         a.Mağaza_Adı,
+                         a.Tarix,
+                         a.Növbə,
+                         a.Giriş_vaxtı,
+                         a.Çıxış_Vaxtı,
+                         a.Gecikmə,
+                         a.Icazə,
+                         a.Status
+                     }).ToList();
+        }
+
+        private async void cmbStore_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+            await LoadAttendanceAsync();
+        }
+
+        private async Task LoadAttendanceAsync()
+        {
+            if (cmbStore.SelectedValue == null || cmbStore.SelectedIndex == -1)
+                return;
+
+            if (cmbStore.SelectedValue is DataRowView)
+                return;
+
+            int storeId = Convert.ToInt32(cmbStore.SelectedValue);
+            DateTime selectedDate = DateTime.Now; // Əgər gələcəkdə tarix seçmək istəsən, DateTimePicker ilə dəyişəcəksən
+
+            var data = await _repo.GetAttendanceByStoreAndDate(storeId, selectedDate);
+
+
+
+
+            var analysisList = new List<AttendanceAnalysis>();
+
+            foreach (var item in data)
+            {
+                if (item.ShiftStart.HasValue && item.ShiftEnd.HasValue)
+                {
+                    var shift = new ShiftsDtos
+                    {
+                        StartTime = item.ShiftStart.Value,
+                        EndTime = item.ShiftEnd.Value,
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+                    };
+
+                    var attendance = new Attendance
+
+                    {
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+                        Date = item.Date,
+                        CheckIn = item.CheckIn,
+                        CheckOut = item.CheckOut
+                    };
+
+                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
+                    analitics.EmployeeId = item.EmployeeId;
+                    analitics.StoreId = item.StoreId;
+                    analitics.EmployeeName = item.EmployeeName;
+                    analitics.StoreName = item.StoreName;
+                    analitics.ShiftDisplay = item.ShiftDisplay;
+
+
+
+                    analysisList.Add(analitics);
+
+                }
+                else if (item.DayOff == true)
+                {
+
+                    var shift = new ShiftsDtos
+                    {
+                        StartTime = item.ShiftStart,
+                        EndTime = item.ShiftEnd,
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+
+                    };
+
+                    var attendance = new Attendance
+
+                    {
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+                        Date = item.Date,
+                        CheckIn = item.CheckIn,
+                        CheckOut = item.CheckOut
+                    };
+
+                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
+                    analitics.EmployeeId = item.EmployeeId;
+                    analitics.StoreId = item.StoreId;
+                    analitics.EmployeeName = item.EmployeeName;
+                    analitics.StoreName = item.StoreName;
+                    analitics.ShiftDisplay = item.ShiftDisplay;
+                    analitics.Status = "Istirahət";
+
+                    analysisList.Add(analitics);
+
+                }
+            }
+            dgvAttendance.DataSource = analysisList
+                     .Select(a => new
+                     {
+                         a.Ad_Familiya,
+                         a.Mağaza_Adı,
+                         a.Tarix,
+                         a.Növbə,
+                         a.Giriş_vaxtı,
+                         a.Çıxış_Vaxtı,
+                         a.Gecikmə,
+                         a.Icazə,
+                         a.Status
+                     }).ToList();
+        }
+
+        private async void txtaxtar_TextChanged(object sender, EventArgs e)
+        {
+            int storeId = Convert.ToInt32(cmbStore.SelectedValue);
+            DateTime selectedDate = dtpDate.Value.Date;
+            var str = txtaxtar.Text;
+            var data = await _repo.Search(storeId, selectedDate, str);
+
+
+
+            var analysisList = new List<AttendanceAnalysis>();
+
+            foreach (var item in data)
+            {
+                if (item.ShiftStart.HasValue && item.ShiftEnd.HasValue)
+                {
+                    var shift = new ShiftsDtos
+                    {
+                        StartTime = item.ShiftStart.Value,
+                        EndTime = item.ShiftEnd.Value,
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+                    };
+
+                    var attendance = new Attendance
+
+                    {
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+                        Date = item.Date,
+                        CheckIn = item.CheckIn,
+                        CheckOut = item.CheckOut
+                    };
+
+                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
+                    analitics.EmployeeId = item.EmployeeId;
+                    analitics.StoreId = item.StoreId;
+                    analitics.EmployeeName = item.EmployeeName;
+                    analitics.StoreName = item.StoreName;
+                    analitics.ShiftDisplay = item.ShiftDisplay;
+
+
+
+                    analysisList.Add(analitics);
+
+                }
+                else if (item.DayOff == true)
+                {
+
+                    var shift = new ShiftsDtos
+                    {
+                        StartTime = item.ShiftStart,
+                        EndTime = item.ShiftEnd,
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+
+                    };
+
+                    var attendance = new Attendance
+
+                    {
+                        EmployeeId = item.EmployeeId,
+                        StoreId = item.StoreId,
+                        Date = item.Date,
+                        CheckIn = item.CheckIn,
+                        CheckOut = item.CheckOut
+                    };
+
+                    var analitics = _repo.AnalyzeAttendance(shift, attendance);
+                    analitics.EmployeeId = item.EmployeeId;
+                    analitics.StoreId = item.StoreId;
+                    analitics.EmployeeName = item.EmployeeName;
+                    analitics.StoreName = item.StoreName;
+                    analitics.ShiftDisplay = item.ShiftDisplay;
+                    analitics.Status = "Istirahət";
+
+                    analysisList.Add(analitics);
+
+                }
+            }
+            dgvAttendance.DataSource = analysisList
+                     .Select(a => new
+                     {
+                         a.Ad_Familiya,
+                         a.Mağaza_Adı,
+                         a.Tarix,
+                         a.Növbə,
+                         a.Giriş_vaxtı,
+                         a.Çıxış_Vaxtı,
+                         a.Gecikmə,
+                         a.Icazə,
+                         a.Status
+                     }).ToList();
+        }
+
+      
     }
 }
