@@ -22,6 +22,7 @@ namespace Empployee_Attendance
         {
             InitializeComponent();
             startclock();
+            dgvAttendance.AutoGenerateColumns = true;
         }
 
 
@@ -257,14 +258,21 @@ namespace Empployee_Attendance
 
         private async void AdminDashboardForm_Load(object sender, EventArgs e)
         {
+            await loadEmployee();
+        }
+
+
+        private async Task loadEmployee()
+        {
             var employees = await _repo.GetAll();
             dgvEmployees.DataSource = employees.Select(a => new
             {
                 a.Ad_Familiya,
                 a.Istifadəçi_Adı,
                 a.Şifrə,
-                a.Admin
+                Admin = a.Admin ? "Admin" : "------------"
             }).ToList();
+
         }
 
         private async void tabAttendance_Enter(object sender, EventArgs e)
@@ -501,11 +509,11 @@ namespace Empployee_Attendance
                      }).ToList();
         }
 
-        private async void cmbStore_SelectedIndexChanged(object sender, EventArgs e)
-        {
+        //private async void cmbStore_SelectedIndexChanged(object sender, EventArgs e)
+        //{
 
-            await LoadAttendanceAsync();
-        }
+        //    await LoadAttendanceAsync();
+        //}
 
         private async Task LoadAttendanceAsync()
         {
@@ -702,6 +710,57 @@ namespace Empployee_Attendance
                      }).ToList();
         }
 
-      
+        private void dgvEmployees_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (dgvEmployees.Columns[e.ColumnIndex].Name == "Şifrə")
+            {
+                e.Value = "********";
+                e.FormattingApplied = true;
+            }
+        }
+
+
+
+        private async Task searchload()
+        {
+            var searchText = txtSearchEmployee.Text.Trim();
+            var employees = await _repo.SearchEmployee(searchText);
+            //dgvAttendance.DataSource = null;
+            //dgvAttendance.Rows.Clear();
+            //dgvAttendance.Columns.Clear();
+            var emp = employees.Select(a => new
+            {
+                a.Ad_Familiya,
+                a.Istifadəçi_Adı,
+                a.Şifrə,
+                Admin = a.Admin ? "Admin" : "------------"
+            }).ToList();
+            dgvEmployees.DataSource = emp;
+        }
+
+        private async void btnAddEmployee_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tabControl_EnabledChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private async void txtSearchEmployee_TextChanged(object sender, EventArgs e)
+        {
+            await searchload();
+        }
+
+        private void dungeonComboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void hopeDatePicker1_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

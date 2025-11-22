@@ -99,10 +99,13 @@ namespace Empployee_Attendance.Repository
         {
             try
             {
-                var response = await _httpClient.GetAsync($"/attendance/status/{employeeId}");
+                var response = await _httpClient.GetAsync($"attendance/status/{employeeId}");
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<Attendance>();
+                    var json= await response.Content.ReadAsStringAsync();
+                    var result =  JsonConvert.DeserializeObject<Attendance>(json);
+                    return result ?? new Attendance();
+                    // return await response.Content.ReadFromJsonAsync<Attendance>();
                 }
                 return null;
             }
@@ -121,6 +124,13 @@ namespace Empployee_Attendance.Repository
 
             if (shifts != null && attendance != null)
             {
+
+                if (shifts.Date == default(DateTime) || shifts.Date.Year == 1)
+                {
+                    // Əgər shifts.Date default-dursa, attendance.Date istifadə edin
+                    shifts.Date = attendance.Date.Date;
+                }
+
                 var result = new AttendanceAnalysis
                 {
                     Date = attendance.Date,
@@ -343,6 +353,25 @@ namespace Empployee_Attendance.Repository
             }
         }
 
-
+        public async Task<List<Employee>> SearchEmployee(string search) 
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"employees/search?query={Uri.EscapeDataString(search)}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    var employees = JsonConvert.DeserializeObject<List<Employee>>(json);
+                    return employees ?? new List<Employee>();
+                    //return await response.Content.ReadFromJsonAsync<List<Employee>>();
+                }
+                return new List<Employee>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Search employee error: {ex.Message}");
+                return new List<Employee>();
+            }
+        }
     }
 }

@@ -15,6 +15,8 @@ namespace Empployee_Attendance.Dto
         [JsonProperty("StoreName")]
         public string StoreName { get; set; }
         public int EmployeeId { get; set; }
+
+        [JsonProperty("Date")]
         public DateTime Date { get; set; }
 
         //public string ShiftDisplay { get; set; }

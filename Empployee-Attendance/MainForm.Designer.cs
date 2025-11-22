@@ -120,26 +120,31 @@
             // 
             // btnCheckIn
             // 
-            btnCheckIn.BackColor = Color.FromArgb(128, 128, 255);
+            btnCheckIn.BackColor = Color.Teal;
+            btnCheckIn.Cursor = Cursors.Hand;
             btnCheckIn.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
-            btnCheckIn.ForeColor = SystemColors.ControlText;
+            btnCheckIn.ForeColor = SystemColors.ButtonHighlight;
             btnCheckIn.Location = new Point(130, 249);
             btnCheckIn.Name = "btnCheckIn";
             btnCheckIn.Size = new Size(150, 50);
             btnCheckIn.TabIndex = 7;
             btnCheckIn.Text = "GİRİŞ ET";
             btnCheckIn.UseVisualStyleBackColor = false;
+            btnCheckIn.Click += btnCheckIn_Click;
             // 
             // btnCheckOut
             // 
-            btnCheckOut.BackColor = Color.DarkRed;
+            btnCheckOut.BackColor = Color.Red;
+            btnCheckOut.Cursor = Cursors.Hand;
             btnCheckOut.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            btnCheckOut.ForeColor = SystemColors.ButtonHighlight;
             btnCheckOut.Location = new Point(340, 249);
             btnCheckOut.Name = "btnCheckOut";
             btnCheckOut.Size = new Size(150, 50);
             btnCheckOut.TabIndex = 8;
             btnCheckOut.Text = "ÇIXIŞ ET";
             btnCheckOut.UseVisualStyleBackColor = false;
+            btnCheckOut.Click += btnCheckOut_Click;
             // 
             // panel1
             // 
@@ -155,6 +160,7 @@
             // label1
             // 
             label1.AutoSize = true;
+            label1.Cursor = Cursors.Hand;
             label1.Font = new Font("Microsoft Sans Serif", 18F, FontStyle.Regular, GraphicsUnit.Point, 204);
             label1.ForeColor = SystemColors.ButtonHighlight;
             label1.Location = new Point(592, 13);
@@ -176,6 +182,7 @@
             // 
             // pictureBox2
             // 
+            pictureBox2.Cursor = Cursors.Hand;
             pictureBox2.Image = Properties.Resources.exit;
             pictureBox2.Location = new Point(565, 2);
             pictureBox2.Name = "pictureBox2";

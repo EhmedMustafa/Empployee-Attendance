@@ -643,6 +643,140 @@ app.get('/api/attendance/search', async (req, res) => {
 });
 
 
+app.post('/api/attendance/checkin/:employeeId', async (req, res) => {
+    const { employeeId } = req.params;
+    console.log("EmployeeId:", req.params.employeeId);
+    try {
+        // Shift üçün storeId tapmaq
+        const result = await pool.request()
+            .input('EmployeeId', sql.Int, employeeId)
+            .query(`
+                SELECT TOP 1 StoreId 
+                FROM Shifts
+                WHERE EmployeeId = @EmployeeId
+                ORDER BY ShiftId DESC
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: 'Bu işçi üçün növbə tapılmadı' });
+        }
+
+        const storeId = result.recordset[0].StoreId;
+
+        // Attendance cədvəlinə insert
+        await pool.request()
+            .input('EmployeeId', sql.Int, employeeId)
+            .input('StoreId', sql.Int, storeId)
+            .input('Today', sql.Date, new Date())
+            .query(`
+                INSERT INTO Attendance (EmployeeId, StoreId, Date, CheckIn)
+                VALUES (@EmployeeId, @StoreId, @Today, GETDATE())
+            `);
+
+        res.json({ message: 'Giriş qeydə alındı ✅' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server xətası' });
+    }
+});
+
+app.get('/api/employees/search',async (req,res)=>{
+    const searchQuery= req.query.query;
+
+    if (!searchQuery) {
+        return res.status(400).json({message:"Query is requored"});
+    }
+
+    try {
+        const result= await pool.request()
+         .input('Search', sql.NVarChar(100), `%${searchQuery}%`)
+        .query (`
+            SELECT * FROM Employees 
+                WHERE FullName LIKE @Search
+            `);
+    
+            res.json(result.recordset);
+    } catch (error) {
+        console.error("Search employee error:",error);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
+
+
+// GET /api/attendance/status/:employeeId
+app.get('/api/attendance/status/:employeeId', async (req, res) => {
+    const employeeId = parseInt(req.params.employeeId);
+
+    try {
+       // const pool = await sql.connect(dbConfig);
+
+        // 1️⃣ Əvvəlcə employee üçün son StoreId tapırıq
+        const storeQuery = await pool.request()
+            .input('EmployeeId', sql.Int, employeeId)
+            .query(`
+                SELECT TOP 1 StoreId
+                FROM Shifts
+                WHERE EmployeeId = @EmployeeId
+                ORDER BY ShiftId DESC
+            `);
+
+        if (storeQuery.recordset.length === 0) {
+            return res.status(404).json({ message: "Bu işçinin növbəsi tapılmadı" });
+        }
+
+        const storeId = storeQuery.recordset[0].StoreId;
+
+        // 2️⃣ Bugünkü Attendance məlumatını tapmaq
+        const attendanceQuery = await pool.request()
+            .input('EmployeeId', sql.Int, employeeId)
+            .input('StoreId', sql.Int, storeId)
+            .query(`
+                SELECT TOP 1 *
+                FROM Attendance
+                WHERE EmployeeId = @EmployeeId
+                    AND StoreId = @StoreId
+                    AND CONVERT(date, CheckIn) = CONVERT(date, GETDATE())
+                ORDER BY CheckIn DESC
+            `);
+
+        const attendance = attendanceQuery.recordset[0] || null;
+
+        res.json(attendance);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server xətası' });
+    }
+});
+
+app.put('/api/attendance/checkout/:employeeId', async (req, res) => {
+    const employeeId = parseInt(req.params.employeeId);
+
+    try {
+       // const pool = await sql.connect(dbConfig);
+
+        const updateQuery = await pool.request()
+            .input('EmployeeId', sql.Int, employeeId)
+            .query(`
+                UPDATE Attendance
+                SET CheckOut = GETDATE()
+                WHERE EmployeeId = @EmployeeId
+                  AND CheckOut IS NULL
+                  AND CAST(CheckIn AS DATE) = CAST(GETDATE() AS DATE)
+            `);
+
+        // updateQuery.rowsAffected → neçə sətir yeniləndi?
+        if (updateQuery.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: "Bu gün üçün giriş tapılmadı və ya çıxış artıq qeydə alınıb." });
+        }
+
+        res.json({ message: "Çıxış qeydə alındı ✅" });
+
+    } catch (err) {
+        console.error('Checkout Error:', err);
+        res.status(500).json({ message: 'Server xətası' });
+    }
+});
 
 
 const PORT = process.env.PORT || 3000;

@@ -141,7 +141,7 @@
             // 
             checkBox1.AutoSize = true;
             checkBox1.Cursor = Cursors.Hand;
-            checkBox1.Font = new Font("Segoe UI", 8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            checkBox1.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 204);
             checkBox1.ForeColor = Color.White;
             checkBox1.Location = new Point(175, 334);
             checkBox1.Margin = new Padding(4, 3, 4, 3);

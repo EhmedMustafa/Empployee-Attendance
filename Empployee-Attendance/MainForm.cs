@@ -24,18 +24,24 @@ namespace Empployee_Attendance
         private readonly int _StoreId;
         private System.Windows.Forms.Timer _Timer;
 
-
-        public MainForm(string EmployeeName,int EmployeeId)
+        private readonly HttpClient _httpClient;
+        private const string BaseUrl = "http://localhost:3000/api/";
+        public MainForm(string EmployeeName, int EmployeeId)
         {
             InitializeComponent();
             _EmplloyeeId = EmployeeId;
             _employeeName = EmployeeName;
             lblEmployeeName.Text = $"Xoş gəldin,{_employeeName}";
             lblStore.Text = $"Mağaza: {_storeName}";
-            lblDate.Text =DateTime.Now.ToString("dd.MM.yyyy");
+            lblDate.Text = DateTime.Now.ToString("dd.MM.yyyy");
 
             LoadTodayShifts(EmployeeId);
             StartClock();
+
+            _httpClient = new HttpClient
+            {
+                BaseAddress = new Uri(BaseUrl)
+            };
         }
 
 
@@ -58,10 +64,10 @@ namespace Empployee_Attendance
 
         private void label1_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Application.Exit();
         }
 
-        private async Task LoadTodayShifts(int employeeId) 
+        private async Task LoadTodayShifts(int employeeId)
         {
             var todayshifts = await _repo.GetTodayShift(employeeId);
 
@@ -103,61 +109,47 @@ namespace Empployee_Attendance
         }
 
 
-        private void btnCheckIn_Click(object sender, EventArgs e)
+
+
+
+
+
+        private async void btnCheckIn_Click(object sender, EventArgs e)
         {
+            // MessageBox.Show($"Göndərilən URL: {_httpClient.BaseAddress}/attendance/checkin/{_EmplloyeeId}");
+            var response = await _httpClient.PostAsync($"attendance/checkin/{_EmplloyeeId}", null);
 
-
-
-            using (var connection = new SqlConnection(connectionString))
+            if (response.IsSuccessStatusCode)
             {
-
-                string storeQuery = @"
-                    SELECT TOP 1 StoreId
-                    FROM Shifts
-                    WHERE EmployeeId = @EmployeeId
-                    ORDER BY ShiftId DESC;";
-
-                var storeId = connection.QueryFirstOrDefault<int>(storeQuery, new { EmployeeId = _EmplloyeeId });
-                if (storeId == 0)
-                {
-                    MessageBox.Show("Bu işçi üçün növbə (Shift) tapılmadı. Zəhmət olmasa əvvəlcə Shift təyin edin!",
-                        "Xəta", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-
-                string query = @"INSERT INTO Attendance (EmployeeId, StoreId, Date, CheckIn) values
-                ( @EmployeeId, @StoreId, CAST(GETDATE() AS DATE), GETDATE()
-                 );";
-                connection.Execute(query, new { EmployeeId = _EmplloyeeId, StoreId = storeId });
+                var resultMessage = await response.Content.ReadAsStringAsync();
+                MessageBox.Show(resultMessage, "Məlumat", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await LoadTodayShifts(_EmplloyeeId);
             }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                MessageBox.Show($"Xəta baş verdi: {errorMessage}", "Xəta", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            await LoadTodayShifts(_EmplloyeeId);
 
-            MessageBox.Show("Giriş qeydə alındı ✅", "Məlumat", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            LoadTodayShifts(_EmplloyeeId);
-            //LoadTodayStatus();
         }
 
-
-        private void btnCheckOut_Click(object sender, EventArgs e)
+        private async void btnCheckOut_Click(object sender, EventArgs e)
         {
-            using (var connection = new SqlConnection(connectionString))
+            var response = await _httpClient.PutAsync($"attendance/checkout/{_EmplloyeeId}", null);
+            if (response.IsSuccessStatusCode)
             {
-                string query = @" UPDATE Attendance
-                                SET CheckOut = GETDATE()
-                                WHERE EmployeeId = @EmployeeId
-                                  AND CheckOut IS NULL
-                                  AND CAST(CheckIn AS DATE) = CAST(GETDATE() AS DATE)";
-
-                connection.Execute(query, new { EmployeeId = _EmplloyeeId });
+                var resultMessage = await response.Content.ReadAsStringAsync();
+                MessageBox.Show(resultMessage, "Məlumat", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await LoadTodayShifts(_EmplloyeeId);
             }
-            MessageBox.Show("Çıxış qeydə alındı ✅", "Məlumat", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            LoadTodayShifts(_EmplloyeeId);
-        }
-
-
-
-
-
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                MessageBox.Show($"Xəta baş verdi: {errorMessage}", "Xəta", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            await LoadTodayShifts(_EmplloyeeId);
+        }   
+    
     }
 }

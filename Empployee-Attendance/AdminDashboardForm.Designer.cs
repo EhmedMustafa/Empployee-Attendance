@@ -33,13 +33,13 @@
             btnEditEmployee = new Button();
             btnDeleteEmployee = new Button();
             tabAttendance = new TabPage();
+            dtpDate = new ReaLTaiizor.Controls.PoisonDateTime();
+            cmbStore = new ReaLTaiizor.Controls.DungeonComboBox();
             FilterStatus = new ComboBox();
             panel1 = new Panel();
             txtaxtar = new TextBox();
             dgvAttendance = new DataGridView();
-            cmbStore = new ComboBox();
             label1 = new Label();
-            dtpDate = new DateTimePicker();
             btnViewAttendance = new Button();
             timer = new System.Windows.Forms.Timer(components);
             tabControl.SuspendLayout();
@@ -86,11 +86,12 @@
             tabControl.SelectedIndex = 0;
             tabControl.Size = new Size(1646, 658);
             tabControl.TabIndex = 2;
+            tabControl.EnabledChanged += tabControl_EnabledChanged;
             tabControl.Enter += tabControl_Enter;
             // 
             // tabEmployees
             // 
-            tabEmployees.BackColor = Color.WhiteSmoke;
+            tabEmployees.BackColor = Color.Transparent;
             tabEmployees.Controls.Add(dgvEmployees);
             tabEmployees.Controls.Add(txtSearchEmployee);
             tabEmployees.Controls.Add(btnAddEmployee);
@@ -121,6 +122,7 @@
             dgvEmployees.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvEmployees.Size = new Size(996, 370);
             dgvEmployees.TabIndex = 4;
+            dgvEmployees.CellFormatting += dgvEmployees_CellFormatting;
             // 
             // txtSearchEmployee
             // 
@@ -130,6 +132,7 @@
             txtSearchEmployee.Name = "txtSearchEmployee";
             txtSearchEmployee.Size = new Size(300, 25);
             txtSearchEmployee.TabIndex = 0;
+            txtSearchEmployee.TextChanged += txtSearchEmployee_TextChanged;
             // 
             // btnAddEmployee
             // 
@@ -144,6 +147,7 @@
             btnAddEmployee.TabIndex = 1;
             btnAddEmployee.Text = "Əlavə et";
             btnAddEmployee.UseVisualStyleBackColor = false;
+            btnAddEmployee.Click += btnAddEmployee_Click;
             // 
             // btnEditEmployee
             // 
@@ -176,13 +180,13 @@
             // tabAttendance
             // 
             tabAttendance.BackColor = Color.LightBlue;
+            tabAttendance.Controls.Add(dtpDate);
+            tabAttendance.Controls.Add(cmbStore);
             tabAttendance.Controls.Add(FilterStatus);
             tabAttendance.Controls.Add(panel1);
             tabAttendance.Controls.Add(txtaxtar);
             tabAttendance.Controls.Add(dgvAttendance);
-            tabAttendance.Controls.Add(cmbStore);
             tabAttendance.Controls.Add(label1);
-            tabAttendance.Controls.Add(dtpDate);
             tabAttendance.Controls.Add(btnViewAttendance);
             tabAttendance.Location = new Point(4, 26);
             tabAttendance.Margin = new Padding(4, 3, 4, 3);
@@ -193,11 +197,52 @@
             tabAttendance.Text = "Davranış Cədvəli";
             tabAttendance.Enter += tabAttendance_Enter;
             // 
+            // dtpDate
+            // 
+            dtpDate.CalendarTitleBackColor = SystemColors.ActiveCaptionText;
+            dtpDate.CalendarTrailingForeColor = Color.Blue;
+            dtpDate.DisplayFocus = true;
+            dtpDate.FontSize = ReaLTaiizor.Extension.Poison.PoisonDateTimeSize.Medium;
+            dtpDate.FontWeight = ReaLTaiizor.Extension.Poison.PoisonDateTimeWeight.Light;
+            dtpDate.Location = new Point(285, 39);
+            dtpDate.MinimumSize = new Size(0, 29);
+            dtpDate.Name = "dtpDate";
+            dtpDate.Size = new Size(218, 29);
+            dtpDate.TabIndex = 14;
+            // 
+            // cmbStore
+            // 
+            cmbStore.BackColor = Color.Silver;
+            cmbStore.ColorA = Color.Black;
+            cmbStore.ColorB = Color.Black;
+            cmbStore.ColorC = Color.FromArgb(242, 241, 240);
+            cmbStore.ColorD = Color.FromArgb(253, 252, 252);
+            cmbStore.ColorE = Color.FromArgb(239, 237, 236);
+            cmbStore.ColorF = Color.FromArgb(180, 180, 180);
+            cmbStore.ColorG = Color.FromArgb(119, 119, 118);
+            cmbStore.ColorH = Color.FromArgb(224, 222, 220);
+            cmbStore.ColorI = Color.FromArgb(250, 249, 249);
+            cmbStore.DrawMode = DrawMode.OwnerDrawVariable;
+            cmbStore.DropDownHeight = 200;
+            cmbStore.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbStore.Font = new Font("Segoe UI", 10F);
+            cmbStore.ForeColor = Color.Black;
+            cmbStore.FormattingEnabled = true;
+            cmbStore.HoverSelectionColor = Color.White;
+            cmbStore.IntegralHeight = false;
+            cmbStore.ItemHeight = 20;
+            cmbStore.Location = new Point(26, 40);
+            cmbStore.Name = "cmbStore";
+            cmbStore.Size = new Size(197, 26);
+            cmbStore.StartIndex = 0;
+            cmbStore.TabIndex = 13;
+            cmbStore.SelectedIndexChanged += dungeonComboBox1_SelectedIndexChanged;
+            // 
             // FilterStatus
             // 
             FilterStatus.DropDownStyle = ComboBoxStyle.DropDownList;
             FilterStatus.FormattingEnabled = true;
-            FilterStatus.Location = new Point(1438, 40);
+            FilterStatus.Location = new Point(1436, 43);
             FilterStatus.Margin = new Padding(4, 3, 4, 3);
             FilterStatus.Name = "FilterStatus";
             FilterStatus.Size = new Size(159, 25);
@@ -206,10 +251,10 @@
             // panel1
             // 
             panel1.BackColor = Color.FromArgb(0, 0, 192);
-            panel1.Location = new Point(834, 68);
+            panel1.Location = new Point(1054, 68);
             panel1.Margin = new Padding(4, 3, 4, 3);
             panel1.Name = "panel1";
-            panel1.Size = new Size(315, 1);
+            panel1.Size = new Size(292, 1);
             panel1.TabIndex = 6;
             // 
             // txtaxtar
@@ -217,11 +262,11 @@
             txtaxtar.BackColor = Color.LightBlue;
             txtaxtar.BorderStyle = BorderStyle.None;
             txtaxtar.Font = new Font("Segoe UI", 14F, FontStyle.Italic, GraphicsUnit.Point, 1, true);
-            txtaxtar.Location = new Point(834, 36);
+            txtaxtar.Location = new Point(1054, 36);
             txtaxtar.Margin = new Padding(4, 3, 4, 3);
             txtaxtar.Multiline = true;
             txtaxtar.Name = "txtaxtar";
-            txtaxtar.Size = new Size(310, 29);
+            txtaxtar.Size = new Size(292, 29);
             txtaxtar.TabIndex = 5;
             txtaxtar.Text = "axtar....";
             txtaxtar.Click += txtaxtar_Click;
@@ -232,7 +277,7 @@
             dgvAttendance.AllowUserToAddRows = false;
             dgvAttendance.AllowUserToDeleteRows = false;
             dgvAttendance.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvAttendance.BackgroundColor = Color.DarkCyan;
+            dgvAttendance.BackgroundColor = Color.MintCream;
             dgvAttendance.BorderStyle = BorderStyle.None;
             dgvAttendance.CellBorderStyle = DataGridViewCellBorderStyle.None;
             dgvAttendance.ClipboardCopyMode = DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
@@ -256,7 +301,7 @@
             dataGridViewCellStyle2.WrapMode = DataGridViewTriState.False;
             dgvAttendance.DefaultCellStyle = dataGridViewCellStyle2;
             dgvAttendance.EnableHeadersVisualStyles = false;
-            dgvAttendance.Location = new Point(20, 96);
+            dgvAttendance.Location = new Point(21, 80);
             dgvAttendance.Margin = new Padding(4, 3, 4, 3);
             dgvAttendance.Name = "dgvAttendance";
             dgvAttendance.ReadOnly = true;
@@ -281,21 +326,6 @@
             dgvAttendance.TabIndex = 4;
             dgvAttendance.CellFormatting += dgvAttendance_CellFormatting;
             // 
-            // cmbStore
-            // 
-            cmbStore.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbStore.Font = new Font("Segoe UI", 10F);
-            cmbStore.FormattingEnabled = true;
-            cmbStore.Items.AddRange(new object[] { "---Hamsi---" });
-            cmbStore.Location = new Point(20, 40);
-            cmbStore.Margin = new Padding(4, 3, 4, 3);
-            cmbStore.Name = "cmbStore";
-            cmbStore.Size = new Size(200, 25);
-            cmbStore.TabIndex = 0;
-            cmbStore.SelectedIndexChanged += cmbStore_SelectedIndexChanged;
-            cmbStore.Click += cmbStore_Click;
-            cmbStore.Enter += cmbStore_Enter;
-            // 
             // label1
             // 
             label1.AutoSize = true;
@@ -307,22 +337,13 @@
             label1.TabIndex = 1;
             label1.Text = "Tarix:";
             // 
-            // dtpDate
-            // 
-            dtpDate.Font = new Font("Segoe UI", 10F);
-            dtpDate.Location = new Point(294, 40);
-            dtpDate.Margin = new Padding(4, 3, 4, 3);
-            dtpDate.Name = "dtpDate";
-            dtpDate.Size = new Size(277, 25);
-            dtpDate.TabIndex = 2;
-            // 
             // btnViewAttendance
             // 
             btnViewAttendance.BackColor = Color.SteelBlue;
             btnViewAttendance.FlatStyle = FlatStyle.Flat;
             btnViewAttendance.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnViewAttendance.ForeColor = Color.White;
-            btnViewAttendance.Location = new Point(601, 40);
+            btnViewAttendance.Location = new Point(849, 39);
             btnViewAttendance.Margin = new Padding(4, 3, 4, 3);
             btnViewAttendance.Name = "btnViewAttendance";
             btnViewAttendance.Size = new Size(150, 30);
@@ -339,12 +360,12 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = Color.LightBlue;
+            BackColor = Color.White;
             ClientSize = new Size(1701, 732);
             Controls.Add(tabControl);
             Controls.Add(lblTime);
             Controls.Add(lblTitle);
-            FormBorderStyle = FormBorderStyle.FixedSingle;
+            FormBorderStyle = FormBorderStyle.FixedDialog;
             Margin = new Padding(4, 3, 4, 3);
             MaximizeBox = false;
             Name = "AdminDashboardForm";
@@ -377,14 +398,14 @@
         private System.Windows.Forms.Button btnAddEmployee;
         private System.Windows.Forms.Button btnEditEmployee;
         private System.Windows.Forms.Button btnDeleteEmployee;
-        private System.Windows.Forms.DataGridView dgvAttendance;
-        private System.Windows.Forms.ComboBox cmbStore;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.DateTimePicker dtpDate;
         private System.Windows.Forms.Button btnViewAttendance;
         private System.Windows.Forms.Timer timer;
         private System.Windows.Forms.Panel panel1;
         public System.Windows.Forms.TextBox txtaxtar;
         private System.Windows.Forms.ComboBox FilterStatus;
+        private ReaLTaiizor.Controls.DungeonComboBox cmbStore;
+        private DataGridView dgvAttendance;
+        private ReaLTaiizor.Controls.PoisonDateTime dtpDate;
     }
 }
